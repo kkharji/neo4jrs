@@ -1,12 +1,12 @@
 [package]
-name = "neo4rs"
+name = "neo4jrs"
 version = "0.5.9"
-authors = ["John Pradeep Vincent <yehohanan7@gmail.com>"]
+authors = ["John Pradeep Vincent <yehohanan7@gmail.com>", "tami5 <>"]
 edition = "2018"
 description = "neo4j driver in rust"
 license = "MIT"
-repository = "https://github.com/yehohanan7/neo4rs"
-documentation = "https://docs.rs/neo4rs"
+repository = "https://github.com/yehohanan7/neo4jrs"
+documentation = "https://docs.rs/neo4jrs"
 readme = "../README.md"
 keywords = ["neo4j", "rust", "bolt", "cypher", "driver"]
 categories = ["database", "network-programming", "asynchronous"]
@@ -14,7 +14,7 @@ categories = ["database", "network-programming", "asynchronous"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-neo4rs-macros = { version = "0.2.1", path = "../macros" }
+neo4jrs-macros = { version = "0.2.1", path = "../macros" }
 futures = { version = "0.3.8" }
 tokio = { version = "1.0.1", features = ["full"] }
 bytes = "1.0.0"

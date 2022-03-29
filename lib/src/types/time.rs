@@ -1,6 +1,6 @@
 use crate::types::*;
 use chrono::{FixedOffset, NaiveTime, Offset, Timelike};
-use neo4rs_macros::BoltStruct;
+use neo4jrs_macros::BoltStruct;
 
 #[derive(Debug, PartialEq, Clone, BoltStruct)]
 #[signature(0xB2, 0x54)]

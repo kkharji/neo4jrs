@@ -1,11 +1,11 @@
 [package]
-name = "neo4rs-macros"
+name = "neo4jrs-macros"
 version = "0.2.1"
 authors = ["John Pradeep Vincent <yehohanan7@gmail.com>"]
 edition = "2018"
-description = "macros used by neo4rs"
+description = "macros used by neo4jrs"
 license = "MIT"
-repository = "https://github.com/yehohanan7/neo4rs"
+repository = "https://github.com/yehohanan7/neo4jrs"
 
 [lib]
 proc-macro = true

@@ -1,5 +1,5 @@
 use bytes::*;
-use neo4rs_macros::BoltStruct;
+use neo4jrs_macros::BoltStruct;
 
 #[derive(Debug, PartialEq, Eq, Clone, BoltStruct)]
 #[signature(0xC0)]

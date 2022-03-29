@@ -25,7 +25,7 @@ impl Connection {
         stream.read_exact(&mut response).await?;
         let version = Version::parse(response)?;
         let mut connection = Connection { version, stream };
-        let hello = BoltRequest::hello("neo4rs", user.to_owned(), password.to_owned());
+        let hello = BoltRequest::hello("neo4jrs", user.to_owned(), password.to_owned());
         match connection.send_recv(hello).await? {
             BoltResponse::SuccessMessage(_msg) => Ok(connection),
             BoltResponse::FailureMessage(msg) => {
