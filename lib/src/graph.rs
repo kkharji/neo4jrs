@@ -1,9 +1,10 @@
-use crate::config::{config, Config};
+use crate::config::Config;
 use crate::errors::*;
 use crate::pool::{create_pool, ConnectionPool};
 use crate::query::Query;
 use crate::stream::RowStream;
 use crate::txn::Txn;
+use crate::ConfigBuilder;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -14,8 +15,9 @@ pub struct Graph {
 }
 
 /// Returns a [`Query`] which provides methods like [`Query::param`] to add parameters to the query
+#[deprecated(since = "0.6.0", note = "please use `Query::new()` instead")]
 pub fn query(q: &str) -> Query {
-    Query::new(q.to_owned())
+    Query::new(q)
 }
 
 impl Graph {
@@ -28,7 +30,11 @@ impl Graph {
 
     /// Connects to the database with default configurations
     pub async fn new(uri: &str, user: &str, password: &str) -> Result<Self> {
-        let config = config().uri(uri).user(user).password(password).build()?;
+        let config = ConfigBuilder::new()
+            .uri(uri)
+            .user(user)
+            .password(password)
+            .build()?;
         Self::connect(config).await
     }
 

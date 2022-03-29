@@ -15,9 +15,9 @@ pub struct Query {
 }
 
 impl Query {
-    pub fn new(query: String) -> Self {
+    pub fn new(query: &str) -> Self {
         Query {
-            query,
+            query: query.into(),
             params: BoltMap::default(),
         }
     }

@@ -25,6 +25,18 @@ pub struct ConfigBuilder {
 }
 
 impl ConfigBuilder {
+    // Create defulat builder
+    pub fn new() -> Self {
+        Self {
+            uri: None,
+            user: None,
+            password: None,
+            db: Some("".to_owned()),
+            max_connections: Some(DEFAULT_MAX_CONNECTIONS),
+            fetch_size: Some(DEFAULT_FETCH_SIZE),
+        }
+    }
+
     ///the uri of the neo4j server
     pub fn uri(mut self, uri: &str) -> Self {
         self.uri = Some(uri.to_owned());
@@ -87,6 +99,7 @@ impl ConfigBuilder {
 }
 
 /// Creates a config builder with reasonable default values wherever appropriate.
+#[deprecated(since = "0.6.0", note = "please use `ConfigBuilder::new` instead")]
 pub fn config() -> ConfigBuilder {
     ConfigBuilder {
         uri: None,
@@ -104,7 +117,7 @@ mod tests {
 
     #[tokio::test]
     async fn should_build_config() {
-        let config = config()
+        let config = ConfigBuilder::new()
             .uri("127.0.0.1:7687")
             .user("some_user")
             .password("some_password")
@@ -123,7 +136,7 @@ mod tests {
 
     #[tokio::test]
     async fn should_build_with_defaults() {
-        let config = config()
+        let config = ConfigBuilder::new()
             .uri("127.0.0.1:7687")
             .user("some_user")
             .password("some_password")
@@ -139,19 +152,19 @@ mod tests {
 
     #[tokio::test]
     async fn should_reject_invalid_config() {
-        assert!(config()
+        assert!(ConfigBuilder::new()
             .user("some_user")
             .password("some_password")
             .build()
             .is_err());
 
-        assert!(config()
+        assert!(ConfigBuilder::new()
             .uri("127.0.0.1:7687")
             .password("some_password")
             .build()
             .is_err());
 
-        assert!(config()
+        assert!(ConfigBuilder::new()
             .uri("127.0.0.1:7687")
             .user("some_user")
             .build()

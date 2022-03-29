@@ -738,7 +738,6 @@
 //!    assert!(result.next().await.unwrap().is_none());
 //! }
 //! ```
-//!
 mod config;
 mod connection;
 mod convert;
@@ -754,9 +753,14 @@ mod txn;
 mod types;
 mod version;
 
-pub use crate::config::{config, Config, ConfigBuilder};
+#[allow(deprecated)]
+pub use crate::config::config;
+#[allow(deprecated)]
+pub use crate::graph::query;
+
+pub use crate::config::{Config, ConfigBuilder};
 pub use crate::errors::*;
-pub use crate::graph::{query, Graph};
+pub use crate::graph::Graph;
 pub use crate::query::Query;
 pub use crate::row::{Node, Path, Point2D, Point3D, Relation, Row, UnboundedRelation};
 pub use crate::stream::RowStream;
