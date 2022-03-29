@@ -156,7 +156,6 @@
 //!    # assert!(result.next().await.unwrap().is_some());
 //!    # assert!(result.next().await.unwrap().is_none());
 //! }
-//!
 //! ```
 //!
 //! ### Streams within a transaction
@@ -214,7 +213,6 @@
 //!    assert!(stream_two.next().await.unwrap().is_none());
 //!    txn.commit().await.unwrap();
 //! }
-//!
 //! ```
 //!
 //!
@@ -247,7 +245,6 @@
 //!        .unwrap();
 //!    assert!(result.next().await.unwrap().is_none());
 //! }
-//!
 //! ```
 //!
 //! ### Txn vs Graph
@@ -296,7 +293,6 @@
 //!    assert!(result.next().await.unwrap().is_some());
 //!    assert!(result.next().await.unwrap().is_none());
 //! }
-//!
 //! ```
 //!
 //! ## Relationships
@@ -352,7 +348,6 @@
 //!    assert_eq!(relation.typ(), "RELATED");
 //!    assert_eq!(relation.get::<String>("as").unwrap(), "friend");
 //! }
-//!
 //! ```
 //!
 //!
@@ -409,7 +404,6 @@
 //!    assert!(result.next().await.unwrap().is_none());
 //!
 //! }
-//!
 //! ```
 //!
 //! ## Raw bytes
@@ -435,7 +429,6 @@
 //!    assert_eq!(b, &[11, 12]);
 //!    assert!(result.next().await.unwrap().is_none());
 //! }
-//!
 //! ```
 //!
 //! ## Durations
@@ -463,7 +456,6 @@
 //!    assert_eq!(d.subsec_nanos(), 7);
 //!    assert!(result.next().await.unwrap().is_none());
 //! }
-//!
 //! ```
 //! ## Date
 //!
@@ -498,7 +490,8 @@
 //! ## Time
 //!
 //! * [NaiveTime][naive_time] captures only the time of the day
-//! * `tuple`([NaiveTime][naive_time], `Option`<[FixedOffset][fixed_offset]>) captures the time of the day along with the
+//! * `tuple`([NaiveTime][naive_time], `Option`<[FixedOffset][fixed_offset]>) captures the time of
+//!   the day along with the
 //! offset
 //!
 //! [naive_time]: https://docs.rs/chrono/0.4.19/chrono/naive/struct.NaiveTime.html
@@ -587,7 +580,6 @@
 //!    assert_eq!(t.1, Some(chrono::FixedOffset::east(1 * 3600)));
 //!    assert!(result.next().await.unwrap().is_none());
 //! }
-//!
 //! ```
 //!
 //!
@@ -712,7 +704,6 @@
 //!    assert!(result.next().await.unwrap().is_none());
 //!
 //! }
-//!
 //! ```
 //!
 //!
@@ -748,7 +739,6 @@
 //! }
 //! ```
 //!
-//!
 mod config;
 mod connection;
 mod convert;
@@ -756,6 +746,7 @@ mod errors;
 mod graph;
 mod messages;
 mod pool;
+pub mod prelude;
 mod query;
 mod row;
 mod stream;
