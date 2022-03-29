@@ -12,39 +12,65 @@ This driver is compatible with neo4j 4.x versions
 
 Builds upon and originally a fork of https://github.com/yehohanan7/neo4rs
 
+## Install
+
+```toml
+[dependencies]
+regex = { git = "https://github.com/tami5/neo4jrs" }
+```
+
 ## API Documentation: [![Docs.rs][docs-badge]][docs-url]
 
 ## Example
 
 ```rust
-    // concurrent queries
-    let uri = "127.0.0.1:7687";
-    let user = "neo4j";
-    let pass = "neo";
-    let graph = Arc::new(Graph::new(&uri, user, pass).await.unwrap());
-    for _ in 1..=42 {
-        let graph = graph.clone();
-        tokio::spawn(async move {
-            let mut result = graph.execute(
-	       query("MATCH (p:Person {name: $name}) RETURN p").param("name", "Mark")
-	    ).await.unwrap();
-            while let Ok(Some(row)) = result.next().await {
-        	let node: Node = row.get("p").unwrap();
-        	let name: String = node.get("name").unwrap();
-                println!("{}", name);
-            }
-        });
-    }
-    //Transactions
-    let mut txn = graph.start_txn().await.unwrap();
-    txn.run_queries(vec![
-        query("CREATE (p:Person {name: 'mark'})"),
-        query("CREATE (p:Person {name: 'jake'})"),
-        query("CREATE (p:Person {name: 'luke'})"),
-    ])
-    .await
-    .unwrap();
-    txn.commit().await.unwrap(); //or txn.rollback().await.unwrap();
+use neo4jrs::prelude::*;
+ use std::sync::Arc;
+
+ #[tokio::main]
+ async fn main() {
+   // concurrent queries
+   let uri = "127.0.0.1:7687";
+   let user = "neo4j";
+   let pass = "neo";
+   let graph = Arc::new(NeoGraph::new(uri, user, pass).await.unwrap());
+   let q = graph.clone();
+   let mut tasks = std::vec::Vec::new();
+
+   tasks.push(tokio::spawn(async move {
+     loop {
+       let mut result = q.execute(
+         query("MATCH (p:Person {name: $name}) RETURN p").param("name", "mark"))
+         .await.unwrap();
+       tokio::select! {
+         Ok(maybe_row) = result.next() => {
+           match maybe_row {
+             Some(row) => {
+               let node: NeoNode = row.get("p").unwrap();
+               let name: String = node.get("name").unwrap();
+               println!("Found {} in the graph", name);
+               return;
+             },
+             None      => println!("Waiting for mark to be added to the graph")
+           }
+         },
+       }
+     }
+   }));
+
+   // Transactions
+   let txn = graph.start_txn().await.unwrap();
+   txn.run_queries(vec![
+     Query::new("CREATE (p:Person {name: 'mark'})"),
+     Query::new("CREATE (p:Person {name: 'jake'})"),
+     Query::new("CREATE (p:Person {name: 'luke'})"),
+   ])
+   .await
+   .unwrap();
+   txn.commit().await.unwrap(); //or txn.rollback().await.unwrap();
+
+   futures::future::join_all(tasks).await;
+ }
 ```
 
 
