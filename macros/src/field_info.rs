@@ -4,8 +4,17 @@ use proc_macro2::Ident;
 #[derive(Debug, PartialEq)]
 pub enum FieldModifier {
     Ignore,
-    Default(String),
+    Default(Default),
     Nested,
+}
+
+/// Represents the default to use for a field.
+#[derive(Debug, PartialEq)]
+pub enum Default {
+    /// The default is given by `std::default::Default::default()`.
+    Default,
+    /// Normal string to be put as is
+    Fn(String),
 }
 
 /// Field information for one filed

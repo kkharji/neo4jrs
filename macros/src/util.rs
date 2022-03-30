@@ -1,21 +1,14 @@
-use crate::field_info::{FieldInformation, FieldModifier};
+use crate::field_info::{Default, FieldInformation, FieldModifier};
+use crate::lit;
 use proc_macro2::Span;
 use proc_macro_error::abort;
 use quote::ToTokens;
 use std::collections::HashMap;
 use syn::spanned::Spanned;
 use syn::Data::Struct;
-use syn::Lit::Str;
 use syn::Meta::{List, NameValue, Path};
 use syn::NestedMeta::{self, Meta};
 use syn::{parse_quote, DataStruct, MetaList, MetaNameValue};
-
-pub fn lit_to_string(lit: &syn::Lit) -> Option<String> {
-    match *lit {
-        Str(ref s) => Some(s.value()),
-        _ => None,
-    }
-}
 
 /// Serde can be used to rename fields on deserialization but most of the times
 /// we want the error on the original field.
@@ -35,7 +28,7 @@ fn find_original_field_name(meta_items: &[&NestedMeta]) -> Option<String> {
                 }) => {
                     let ident = path.get_ident().unwrap();
                     if ident == "rename" {
-                        original_name = Some(lit_to_string(lit).unwrap());
+                        original_name = Some(lit::to_string(lit).unwrap());
                     }
                 }
                 List(MetaList { ref nested, .. }) => {
@@ -57,7 +50,6 @@ fn find_original_field_name(meta_items: &[&NestedMeta]) -> Option<String> {
 /// Needed for the `must_match` filter
 fn find_fields_type(fields: &[syn::Field]) -> HashMap<String, String> {
     let mut types = HashMap::new();
-
     for field in fields {
         let field_ident = field.ident.clone().unwrap().to_string();
         let field_type = match field.ty {
@@ -125,71 +117,76 @@ fn find_field_modifiers(
     };
 
     for attr in &field.attrs {
-        if attr.path != parse_quote!(neo4j) && attr.path != parse_quote!(serde) {
+        let neo4j_path = parse_quote!(neo4j);
+        if attr.path != neo4j_path && attr.path != parse_quote!(serde) {
             continue;
         }
 
-        if attr.path == parse_quote!(neo4j) {
+        if attr.path == neo4j_path {
             has_modifiers = true;
         }
 
         match attr.parse_meta() {
-            Ok(List(MetaList { ref nested, .. })) => {
-                let meta_items = nested.iter().collect::<Vec<_>>();
-                // original name before serde rename
-                if attr.path == parse_quote!(serde) {
-                    if let Some(s) = find_original_field_name(&meta_items) {
-                        field_ident = s;
+            Ok(a) => match a {
+                Path(_) => abort!(attr.span(), "Unexpected nesting of path"),
+                NameValue(_) => abort!(attr.span(), "Unexpected name=value argument"),
+                List(MetaList { ref nested, .. }) => {
+                    let meta_items = nested.iter().collect::<Vec<_>>();
+                    if attr.path == parse_quote!(serde) {
+                        if let Some(s) = find_original_field_name(&meta_items) {
+                            field_ident = s;
+                        }
+                        continue;
                     }
-                    continue;
-                }
-                for meta_item in meta_items {
-                    match *meta_item {
-                        NestedMeta::Meta(ref item) => match *item {
-                            Path(ref name) => {
-                                match name.get_ident().unwrap().to_string().as_ref() {
-                                    "ignore" => {
-                                        modifiers.push(FieldModifier::Ignore);
+
+                    for item in meta_items {
+                        match *item {
+                            NestedMeta::Meta(ref item) => match *item {
+                                Path(ref name) => {
+                                    match name.get_ident().unwrap().to_string().as_ref() {
+                                        "ignore" => {
+                                            modifiers.push(FieldModifier::Ignore);
+                                        }
+                                        "default" => {
+                                            modifiers.push(FieldModifier::Default(Default::Default))
+                                        }
+                                        v => {
+                                            abort!(name.span(), "Unexpected field modifier: {}", v)
+                                        }
                                     }
-                                    v => abort!(name.span(), "Unexpected field modifier: {}", v),
                                 }
-                            }
-                            NameValue(MetaNameValue {
-                                ref path, ref lit, ..
-                            }) => {
-                                let ident = path.get_ident().unwrap();
-                                match ident.to_string().as_ref() {
-                                    "default" => {
-                                        match lit_to_string(lit) {
-                                            Some(s) => modifiers.push(FieldModifier::Default(s)),
-                                            None => error(lit.span(), "invalid argument for `contains` validator: only strings are allowed"),
-                                        };
+                                NameValue(ref m) if m.path.is_ident("default") => {
+                                    if let Some(s) = lit::to_string(&m.lit) {
+                                        modifiers.push(FieldModifier::Default(Default::Fn(s)))
                                     }
-                                    v => abort!(
+                                }
+                                NameValue(MetaNameValue { ref path, .. }) => {
+                                    abort!(
                                         path.span(),
-                                        "unexpected name value validator: {:?}",
-                                        v
-                                    ),
-                                };
-                            }
-                            List(MetaList {
-                                ref path,
-                                ref nested,
-                                ..
-                            }) => {
-                                let _meta_items = nested.iter().cloned().collect::<Vec<_>>();
-                                let ident = path.get_ident().unwrap();
-                                match ident.to_string().as_ref() as &str {
-                                    v => abort!(path.span(), "unexpected list modifiers: {:?}", v),
+                                        "HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                                    )
                                 }
-                            }
-                        },
-                        _ => unreachable!("Found a non Meta while looking for validators"),
-                    };
+                                List(MetaList {
+                                    ref path,
+                                    ref nested,
+                                    ..
+                                }) => {
+                                    let _meta_items = nested.iter().cloned().collect::<Vec<_>>();
+                                    let ident = path.get_ident().unwrap();
+                                    match ident.to_string().as_ref() as &str {
+                                        v => abort!(
+                                            path.span(),
+                                            "unexpected list modifiers: {:?}",
+                                            v
+                                        ),
+                                    }
+                                }
+                            },
+                            _ => unreachable!(),
+                        };
+                    }
                 }
-            }
-            Ok(Path(_)) => modifiers.push(FieldModifier::Nested),
-            Ok(NameValue(_)) => abort!(attr.span(), "Unexpected name=value argument"),
+            },
             Err(e) => {
                 let error_string = format!("{:?}", e);
                 if error_string == "Error(\"expected literal\")" {
@@ -209,7 +206,7 @@ fn find_field_modifiers(
         }
 
         if has_modifiers && modifiers.is_empty() {
-            error(attr.span(), "it needs at least one validator");
+            error(attr.span(), "something went wrong");
         }
     }
 

@@ -1,13 +1,16 @@
 mod bolt_struct;
 mod field_info;
 mod label;
+mod lit;
 mod util;
 
 use proc_macro::TokenStream;
+use proc_macro_error::proc_macro_error;
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
 
 #[proc_macro_derive(BoltStruct, attributes(signature))]
+#[proc_macro_error]
 pub fn derive_boltstruct(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
@@ -15,6 +18,7 @@ pub fn derive_boltstruct(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_derive(Label, attributes(neo4j))]
+#[proc_macro_error]
 pub fn derive_label(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
     label::expand(ast).into()
