@@ -768,3 +768,4 @@ pub use crate::stream::RowStream;
 pub use crate::txn::Txn;
 pub use crate::version::Version;
 pub use execute::Execute;
+pub use neo4jrs_macros::Label;
