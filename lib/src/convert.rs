@@ -283,6 +283,16 @@ impl<A: Into<BoltType> + Clone> Into<BoltType> for Vec<A> {
     }
 }
 
+impl<A: Into<BoltType> + Clone> Into<BoltType> for Option<A> {
+    fn into(self) -> BoltType {
+        if self.is_none() {
+            BoltType::Null(BoltNull::default())
+        } else {
+            self.unwrap().into()
+        }
+    }
+}
+
 impl Into<BoltType> for Vec<u8> {
     fn into(self) -> BoltType {
         BoltType::Bytes(BoltBytes::new(self.into()))
