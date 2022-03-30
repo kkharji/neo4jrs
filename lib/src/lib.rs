@@ -742,6 +742,7 @@ mod config;
 mod connection;
 mod convert;
 mod errors;
+mod execute;
 mod graph;
 mod messages;
 mod pool;
@@ -766,3 +767,4 @@ pub use crate::row::{Node, Path, Point2D, Point3D, Relation, Row, UnboundedRelat
 pub use crate::stream::RowStream;
 pub use crate::txn::Txn;
 pub use crate::version::Version;
+pub use execute::Execute;

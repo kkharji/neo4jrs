@@ -4,6 +4,8 @@ use crate::messages::*;
 use crate::pool::*;
 use crate::query::*;
 use crate::stream::*;
+use crate::Execute;
+use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -36,16 +38,6 @@ impl Txn {
         Ok(())
     }
 
-    /// Runs a single query and discards the stream.
-    pub async fn run(&self, q: Query) -> Result<()> {
-        q.run(&self.config, self.connection.clone()).await
-    }
-
-    /// Executes a query and returns a [`RowStream`]
-    pub async fn execute(&self, q: Query) -> Result<RowStream> {
-        q.execute(&self.config, self.connection.clone()).await
-    }
-
     /// Commits the transaction in progress
     pub async fn commit(self) -> Result<()> {
         let commit = BoltRequest::commit();
@@ -62,5 +54,18 @@ impl Txn {
             BoltResponse::SuccessMessage(_) => Ok(()),
             msg => Err(unexpected(msg, "ROLLBACK")),
         }
+    }
+}
+
+#[async_trait]
+impl Execute for Txn {
+    /// Runs a single query and discards the stream.
+    async fn run(&self, q: Query) -> Result<()> {
+        q.run(&self.config, self.connection.clone()).await
+    }
+
+    /// Executes a query and returns a [`RowStream`]
+    async fn execute(&self, q: Query) -> Result<RowStream> {
+        q.execute(&self.config, self.connection.clone()).await
     }
 }

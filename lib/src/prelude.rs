@@ -11,3 +11,4 @@ pub use crate::row::{
 pub use crate::stream::RowStream as NeoRowStream;
 pub use crate::txn::Txn as NeoTxn;
 pub use crate::version::Version as NeoVersion;
+pub use crate::Execute as NeoExecute;

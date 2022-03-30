@@ -4,7 +4,8 @@ use crate::pool::{create_pool, ConnectionPool};
 use crate::query::Query;
 use crate::stream::RowStream;
 use crate::txn::Txn;
-use crate::ConfigBuilder;
+use crate::{ConfigBuilder, Execute};
+use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -44,20 +45,23 @@ impl Graph {
         let connection = self.pool.get().await?;
         Txn::new(self.config.clone(), connection).await
     }
+}
 
+#[async_trait]
+impl Execute for Graph {
     /// Runs a query using a connection from the connection pool, it doesn't return any
     /// [`RowStream`] as the `run` abstraction discards any stream.
     ///
     /// Use [`Graph::run`] for cases where you just want a write operation
     ///
     /// use [`Graph::execute`] when you are interested in the result stream
-    pub async fn run(&self, q: Query) -> Result<()> {
+    async fn run(&self, q: Query) -> Result<()> {
         let connection = Arc::new(Mutex::new(self.pool.get().await?));
         q.run(&self.config, connection).await
     }
 
     /// Executes a query and returns a [`RowStream`]
-    pub async fn execute(&self, q: Query) -> Result<RowStream> {
+    async fn execute(&self, q: Query) -> Result<RowStream> {
         let connection = Arc::new(Mutex::new(self.pool.get().await?));
         q.execute(&self.config, connection).await
     }
