@@ -1,27 +1,28 @@
+use crate::field_info::FieldInformation;
+use crate::util;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
-use syn::punctuated::Punctuated;
-use syn::token::Comma;
-use syn::Data::Struct;
-use syn::{DeriveInput, Error, Field, Fields};
+use syn::DeriveInput;
 
 /// Inject pub presist function to insert struct to graph db
-fn presist(name: &Ident, fields: &Vec<(&Ident, String)>) -> TokenStream {
-    let fields_str = fields
+fn presist_fn(name: &Ident, fields: &Vec<FieldInformation>) -> TokenStream {
+    let field_names = fields
         .iter()
-        .map(|s| format!("{}: ${}", s.1, s.1))
+        .map(|s| format!("{}: ${}", s.name, s.name))
         .collect::<Vec<String>>()
         .join(", ");
 
-    let fileds_p = fields
-        .iter()
-        .map(|(id, k)| quote!(p.put(#k.into(), self.#id.clone().into())));
+    let field_injects = fields.iter().map(|info| {
+        let name = &info.name;
+        let ident = info.ident();
+        quote!(p.put(#name.into(), self.#ident.clone().into()))
+    });
 
-    let query = format!("create (_:{name} {{{}}})", fields_str);
+    let query = format!("create (_:{name} {{{}}})", field_names);
 
     quote! {
         pub async fn persist(&self, executor: &impl neo4jrs::Execute) -> neo4jrs::Result<()> {
-            let mut p = neo4jrs::types::BoltMap::default() #(; #fileds_p)*;
+            let mut p = neo4jrs::types::BoltMap::default() #(; #field_injects)*;
 
             let query = neo4jrs::Query::new_with_params(#query, p);
 
@@ -30,50 +31,17 @@ fn presist(name: &Ident, fields: &Vec<(&Ident, String)>) -> TokenStream {
     }
 }
 
-fn get_fields<'a>(struct_fields: &'a Punctuated<Field, Comma>) -> Vec<(&'a Ident, String)> {
-    struct_fields
-        .iter()
-        .map(|field| {
-            let ident = field.ident.as_ref()?;
-            let string = ident.to_string();
-            Some((ident, string))
-        })
-        .flatten()
-        .collect::<Vec<(&syn::Ident, String)>>()
-}
-
-fn get_struct_fields(ast: &DeriveInput) -> Result<Punctuated<Field, Comma>, Vec<Error>> {
-    if let Struct(data) = &ast.data {
-        match &data.fields {
-            Fields::Named(syn::FieldsNamed { named, .. }) => Ok(named.clone()),
-            Fields::Unnamed(_) => Err(vec![Error::new(
-                ast.ident.span(),
-                "unnamed fields not supported",
-            )]),
-            Fields::Unit => Ok(Punctuated::new()),
-        }
-    } else {
-        return Err(vec![Error::new(ast.ident.span(), "not a struct")]);
-    }
-}
-
-pub fn expand(ast: DeriveInput) -> Result<TokenStream, Vec<Error>> {
+pub fn expand(ast: DeriveInput) -> TokenStream {
     let name = &ast.ident;
-    let struct_fields = match get_struct_fields(&ast) {
-        Ok(f) => f,
-        Err(e) => return Err(e),
-    };
+    let fields = util::collect_fields_information(&ast);
+    let presist_fn = presist_fn(name, &fields);
 
-    let fields = get_fields(&struct_fields);
-    let presist = presist(name, &fields);
-
-    let gen = quote! {
+    let expanded = quote! {
         impl #name {
-            #presist
+            #presist_fn
         }
     };
 
-    println!("{}", gen);
-
-    Ok(gen.into())
+    // println!("{}", expanded);
+    expanded.into()
 }
