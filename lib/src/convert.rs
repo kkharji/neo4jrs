@@ -1,6 +1,7 @@
 use crate::errors::*;
 use crate::row::*;
 use crate::types::*;
+use secrecy::Secret;
 use std::convert::{TryFrom, TryInto};
 
 impl<A: TryFrom<BoltType>> TryFrom<BoltType> for Vec<A> {
@@ -14,6 +15,16 @@ impl<A: TryFrom<BoltType>> TryFrom<BoltType> for Vec<A> {
                 .iter()
                 .flat_map(|x| A::try_from(x.clone()))
                 .collect()),
+            _ => Err(Error::ConverstionError),
+        }
+    }
+}
+
+impl TryFrom<BoltType> for Secret<String> {
+    type Error = Error;
+    fn try_from(input: BoltType) -> Result<Secret<String>> {
+        match input {
+            BoltType::String(v) => Ok(Secret::new(v.to_string())),
             _ => Err(Error::ConverstionError),
         }
     }
@@ -290,6 +301,14 @@ impl<A: Into<BoltType> + Clone> Into<BoltType> for Option<A> {
         } else {
             self.unwrap().into()
         }
+    }
+}
+
+impl Into<BoltType> for Secret<String> {
+    fn into(self) -> BoltType {
+        secrecy::ExposeSecret::expose_secret(&self)
+            .to_owned()
+            .into()
     }
 }
 
