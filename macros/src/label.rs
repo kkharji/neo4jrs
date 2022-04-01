@@ -3,8 +3,8 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::DeriveInput;
 
-/// Inject pub presist function to insert struct to graph db
-fn presist_fn(cx: &Ctx, cont: &Container) -> TokenStream {
+/// Inject pub persist function to insert struct to graph db
+fn persist_fn(cx: &Ctx, cont: &Container) -> TokenStream {
     let (fields_kv, injections): (Vec<String>, Vec<TokenStream>) = iter_fields(cx, cont, |field| {
         let name = field.attrs.name();
         let ident = field.original.ident.as_ref()?;
@@ -162,7 +162,7 @@ pub fn expand(ast: DeriveInput) -> Result<TokenStream, Vec<syn::Error>> {
         None => return Err(ctx.check().unwrap_err()),
     };
 
-    let presist = presist_fn(&ctx, &cont);
+    let persist = persist_fn(&ctx, &cont);
     let find_by = find_by_fn(&ctx, &cont);
     let impl_node = impl_node(&ctx, &cont);
     let update = update_fn(&ctx, &cont).unwrap_or(quote! {});
@@ -170,7 +170,7 @@ pub fn expand(ast: DeriveInput) -> Result<TokenStream, Vec<syn::Error>> {
     ctx.check()?;
 
     let expanded = quote! {
-        #presist
+        #persist
         #update
         #find_by
         #impl_node
