@@ -84,11 +84,4 @@ impl Default {
             }
         }
     }
-
-    /// Returns `true` if the default is [`None`].
-    ///
-    /// [`None`]: Default::None
-    pub(crate) fn is_none(&self) -> bool {
-        matches!(self, Self::None)
-    }
 }

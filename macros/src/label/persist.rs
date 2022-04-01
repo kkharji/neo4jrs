@@ -24,8 +24,6 @@ pub(crate) fn gen(_cx: &Ctx, cont: &Container) -> TokenStream {
                         }
                     }
                 }
-
-                tracing::trace!("Inserting new entity");
                 self.insert(graph).await
             }
         }
