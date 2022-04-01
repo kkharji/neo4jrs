@@ -13,12 +13,12 @@ pub fn gen(cx: &Ctx, cont: &Container) -> TokenStream {
         Some(quote! {
             pub async fn #by_many_ident<T: Into<neo4jrs::types::BoltType>>(val: T, graph: &impl neo4jrs::Execute) -> Option<Vec<Self>> {
                 let query = neo4jrs::Query::new(#query).param(#fname, val.into());
-                Self::find_many(query, graph).await
+                Self::query(query, graph).await
             }
 
             pub async fn #by_one_ident<T: Into<neo4jrs::types::BoltType>>(val: T, graph: &impl neo4jrs::Execute) -> Option<Self> {
                 let query = neo4jrs::Query::new(#query).param(#fname, val.into());
-                Self::find_one(query, graph).await
+                Self::query_one(query, graph).await
             }
         })
     });
@@ -26,7 +26,7 @@ pub fn gen(cx: &Ctx, cont: &Container) -> TokenStream {
     let expanded = quote! {
 
         impl #name {
-            pub async fn find_many(query: neo4jrs::Query, graph: &impl neo4jrs::Execute) -> Option<Vec<Self>> {
+            pub async fn query(query: neo4jrs::Query, graph: &impl neo4jrs::Execute) -> Option<Vec<Self>> {
                 let mut list: Vec<Self> = vec![];
                 let mut result = graph.execute(query).await.ok()?;
 
@@ -39,7 +39,7 @@ pub fn gen(cx: &Ctx, cont: &Container) -> TokenStream {
                 Some(list)
             }
 
-            pub async fn find_one(query: neo4jrs::Query, graph: &impl neo4jrs::Execute) -> Option<Self> {
+            pub async fn query_one(query: neo4jrs::Query, graph: &impl neo4jrs::Execute) -> Option<Self> {
                 if let Ok(Some(row)) = graph.execute(query).await.ok()?.next().await {
                     if let Some(n) = row.get::<neo4jrs::Node>("n") {
                         return Some(n.into())
