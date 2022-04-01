@@ -3,6 +3,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::DeriveInput;
 mod convert;
+mod delete;
 mod find;
 mod insert;
 mod persist;
@@ -21,6 +22,7 @@ pub fn expand(ast: DeriveInput) -> Result<TokenStream, Vec<syn::Error>> {
     let extend = convert::gen(&ctx, &cont);
     let update = update::gen(&ctx, &cont);
     let insert = insert::gen(&ctx, &cont);
+    let delete = delete::gen(&ctx, &cont);
 
     ctx.check()?;
 
@@ -30,6 +32,7 @@ pub fn expand(ast: DeriveInput) -> Result<TokenStream, Vec<syn::Error>> {
         #persist
         #find
         #extend
+        #delete
     };
 
     Ok(expanded.into())
