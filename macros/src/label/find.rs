@@ -4,6 +4,7 @@ use quote::{format_ident, quote};
 
 pub fn gen(cx: &Ctx, cont: &Container) -> TokenStream {
     let name = cont.ident();
+    let get_all_query = format!("match (n:{name}) return n");
     let find_fns = iter_fields(cx, cont, |field| {
         let fname = field.attrs.name();
         let by_many_ident = format_ident!("find_many_by_{fname}");
@@ -26,6 +27,11 @@ pub fn gen(cx: &Ctx, cont: &Container) -> TokenStream {
     let expanded = quote! {
 
         impl #name {
+
+            pub async fn get_all(graph: &impl neo4jrs::Execute) -> Result<Vec<Self>, neo4jrs::Error> {
+                println!(#get_all_query);
+                Self::query(neo4jrs::Query::new(#get_all_query), graph).await
+            }
 
             pub async fn query(query: neo4jrs::Query, graph: &impl neo4jrs::Execute) -> Result<Vec<Self>, neo4jrs::Error> {
                 let mut list = vec![];
