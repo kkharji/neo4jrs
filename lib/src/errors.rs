@@ -17,6 +17,7 @@ pub enum Error {
     AuthenticationError(String),
     InvalidTypeMarker(String),
     DeserializationError(String),
+    NoMatch,
 }
 
 impl std::convert::From<std::io::Error> for Error {
