@@ -9,7 +9,7 @@ use syn::NestedMeta::{Lit, Meta};
 pub struct ContainerAttrs {
     pub name: String,
     /// The main identifier key to search with in database
-    pub identifier: Option<String>,
+    pub identifier: String,
     /// Default alternative for missing fields
     pub default: Default,
     /// Error message generated when type can't be processed
@@ -54,7 +54,7 @@ impl ContainerAttrs {
 
         Self {
             name: input.ident.to_string(),
-            identifier: identifier.get(),
+            identifier: identifier.get().unwrap_or("id".into()),
             expecting: expecting.get(),
             default: default.get().unwrap_or(Default::None),
         }
@@ -72,7 +72,7 @@ impl ContainerAttrs {
     }
 
     /// Get a reference to the container's index.
-    pub fn identifier(&self) -> Option<&String> {
+    pub fn identifier(&self) -> &str {
         self.identifier.as_ref()
     }
 

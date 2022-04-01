@@ -30,6 +30,42 @@ fn presist_fn(cx: &Ctx, cont: &Container) -> TokenStream {
     }
 }
 
+/// Inject pub update function to insert struct to graph db
+fn update_fn(cx: &Ctx, cont: &Container) -> Option<TokenStream> {
+    let identifier = cont.attrs.identifier();
+    let name = cont.ident();
+
+    let (fields_kv, injections): (Vec<String>, Vec<TokenStream>) = iter_fields(cx, cont, |field| {
+        let field_name = field.attrs.name();
+        let fident = field.original.ident.as_ref()?;
+        let injection = quote!(p.put(#field_name.into(), self.#fident.clone().into()));
+        let kv = format!("set n.{} = ${}", field_name, field_name);
+
+        Some((kv, injection))
+    })
+    .into_iter()
+    .unzip();
+
+    let update_query = format!(
+        "match (n:{name} {{{}: ${}}}) {} return n",
+        identifier,
+        identifier,
+        fields_kv.join("  ")
+    );
+
+    let expanded = quote! {
+        impl #name {
+            pub async fn update(&self, graph: &impl neo4jrs::Execute) -> Result<(), neo4jrs::Error> {
+                let mut p = neo4jrs::types::BoltMap::default() #(; #injections)*;
+                let query = neo4jrs::Query::new_with_params(#update_query, p);
+                graph.run(query).await
+            }
+        }
+    };
+
+    Some(expanded.into())
+}
+
 fn impl_node(cx: &Ctx, cont: &Container) -> TokenStream {
     let name = cont.ident();
     let injections = iter_fields(cx, cont, |field| {
@@ -129,11 +165,13 @@ pub fn expand(ast: DeriveInput) -> Result<TokenStream, Vec<syn::Error>> {
     let presist = presist_fn(&ctx, &cont);
     let find_by = find_by_fn(&ctx, &cont);
     let impl_node = impl_node(&ctx, &cont);
+    let update = update_fn(&ctx, &cont).unwrap_or(quote! {});
 
     ctx.check()?;
 
     let expanded = quote! {
         #presist
+        #update
         #find_by
         #impl_node
     };
