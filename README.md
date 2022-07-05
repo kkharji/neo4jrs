@@ -1,6 +1,6 @@
 # neo4jrs [![Crates.io][crates-badge]][crates-url]
 
-[ci-url]: https://github.com/tami5/neo4jrs
+[ci-url]: https://github.com/kkharji/neo4jrs
 [crates-badge]: https://img.shields.io/crates/v/neo4jrs.svg?style=shield
 [crates-url]: https://crates.io/crates/neo4jrs
 [docs-badge]: https://img.shields.io/badge/docs-latest-blue.svg?style=shield
@@ -16,7 +16,7 @@ Builds upon and originally a fork of https://github.com/yehohanan7/neo4rs
 
 ```toml
 [dependencies]
-regex = { git = "https://github.com/tami5/neo4jrs" }
+regex = { git = "https://github.com/kkharji/neo4jrs" }
 ```
 
 ## API Documentation: [![Docs.rs][docs-badge]][docs-url]
